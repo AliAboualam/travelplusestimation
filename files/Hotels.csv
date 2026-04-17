@@ -1,0 +1,25 @@
+Ville,Hotel,Etoiles, Prix par personne en double,Prix par personne en single,Supplement DP
+Casablanca,New Hotel,4,610,920.0,200
+Casablanca,Kaan,4,570,970.0,300
+Casablanca,Diwan,4,420,770.0,200
+Casablanca,Kenzi Tower,5,1150,2000.0,450
+Marrakech ,Rose Aqua Park,4,802,1420.0,200
+Marrakech ,Palm plaza,5,855,1530.0,350
+Marrakech ,Adam Park,5,840,1420.0,350
+Fes,Barcelo Fes,4,710,1120.0,250
+Fes,Atlas Saiss,4,550,730.0,259
+Fes,Ibis,3,350,550.0,150
+Fes,Palais Medina,5,770,1140.0,350
+Tanger,Marina Bay,4,860,1550.0,250
+Tanger,Solazur,4,800,1400.0,250
+Tanger,Hilton City Center,5,920,1640.0,450
+Chefchaouen,Dar Jasmine,,1130,2100.0,200
+Chefchaouen,Dar Ba Sidi,,500,,200
+Merzouga,Erg Chebbi,,920,1300.0,INCLUS
+Merzouga,Azawad Luxury Camp,,950,1400.0,INCLUS
+Ourazazate,Dar Chamaa,4,520,750.0,200
+ouarzazate,Dar Chams,4,520,836.0,200
+ouarzazate,Karam Palace,4,500,700.0,200
+ouarzazate,Berbere Palace,5,1750,2800.0,500
+Rabat,Belere Rabat,5,700,980.0,350
+Rabat,Mercure M Gallery,4,520,1050.0,350

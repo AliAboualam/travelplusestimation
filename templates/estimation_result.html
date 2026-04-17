@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estimation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @media print {
+            #langToggle, #bottomButtons { display: none !important; }
+            .bg-blue-600 { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body { background: white !important; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen py-8">
+<div class="max-w-4xl mx-auto px-4 space-y-6">
+
+    <!-- Language toggle -->
+    <div id="langToggle" class="flex justify-end gap-2">
+        <button id="btn-fr" class="px-3 py-1.5 rounded text-sm font-semibold border-2 transition-all">&#127467;&#127479; FR</button>
+        <button id="btn-en" class="px-3 py-1.5 rounded text-sm font-semibold border-2 transition-all">&#127468;&#127463; EN</button>
+    </div>
+
+    <h1 class="text-3xl font-bold text-center text-gray-800" data-i18n="r_title">Estimation</h1>
+
+    <!-- Résumé général -->
+    <section class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold text-gray-700 border-b pb-2 mb-4" data-i18n="r_summary">R&eacute;sum&eacute; g&eacute;n&eacute;ral</h2>
+        <dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+            <dt class="text-gray-500" data-i18n="r_nb_persons">Nombre de personnes</dt>
+            <dd class="font-medium">{{ nb_personnes }}</dd>
+            <dt class="text-gray-500" data-i18n="r_cities">Villes</dt>
+            <dd class="font-medium">{{ villes|join:", " }}</dd>
+            <dt class="text-gray-500" data-i18n="r_transport_services">Lignes transport</dt>
+            <dd class="font-medium">{{ transport_items|length }}</dd>
+        </dl>
+    </section>
+
+    <!-- Transport -->
+    {% if transport_items %}
+    <section class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold text-gray-700 border-b pb-2 mb-4" data-i18n="r_transport">Transport</h2>
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left text-gray-500 border-b">
+                    <th class="pb-2" data-i18n="r_service_type">Type de service</th>
+                    <th class="pb-2" data-i18n="r_vehicle">V&eacute;hicule</th>
+                    <th class="pb-2" data-i18n="r_capacity">Capacit&eacute;</th>
+                    <th class="pb-2" data-i18n="r_quantity">Nombre</th>
+                    <th class="pb-2" data-i18n="r_unit_price">Tarif unitaire</th>
+                    <th class="pb-2" data-i18n="r_total_transport">Total transport</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in transport_items %}
+                <tr class="border-b last:border-0">
+                    <td class="py-2 transport-service-label" data-service-type="{{ item.service_type }}">{{ item.service_type_label }}</td>
+                    <td class="py-2">{{ item.vehicle_type }}</td>
+                    <td class="py-2">{{ item.capacite }} pax</td>
+                    <td class="py-2">{{ item.quantity }}</td>
+                    <td class="py-2">{{ item.unit_price }} Dhs</td>
+                    <td class="py-2 font-medium">{{ item.line_total }} Dhs</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="font-semibold text-blue-700">
+                    <td colspan="5" class="pt-3" data-i18n="r_total_transport">Total transport</td>
+                    <td class="pt-3">{{ transport_total }} Dhs</td>
+                </tr>
+            </tfoot>
+        </table>
+    </section>
+    {% endif %}
+
+    <!-- Hôtels -->
+    {% if hotels %}
+    <section class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold text-gray-700 border-b pb-2 mb-4" data-i18n="r_hotels">H&ocirc;tels</h2>
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left text-gray-500 border-b">
+                    <th class="pb-2" data-i18n="r_city">Ville</th>
+                    <th class="pb-2" data-i18n="r_hotel">H&ocirc;tel</th>
+                    <th class="pb-2" data-i18n="r_nights">Nuits</th>
+                    <th class="pb-2" data-i18n="r_price_single">Prix/nuit (single)</th>
+                    <th class="pb-2" data-i18n="r_price_double">Prix/nuit (double)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in hotels %}
+                <tr class="border-b last:border-0">
+                    <td class="py-2">{{ h.ville }}</td>
+                    <td class="py-2">{{ h.hotel }}{% if h.etoiles %} <span class="text-yellow-500 text-xs">{{ h.etoiles }}★</span>{% endif %}</td>
+                    <td class="py-2">{{ h.nuits }}</td>
+                    <td class="py-2">{{ h.prix_single }} Dhs</td>
+                    <td class="py-2">{{ h.prix_double }} Dhs</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+    {% endif %}
+
+    <!-- Monuments -->
+    {% if monuments %}
+    <section class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold text-gray-700 border-b pb-2 mb-4" data-i18n="r_monuments">Monuments</h2>
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left text-gray-500 border-b">
+                    <th class="pb-2" data-i18n="r_city">Ville</th>
+                    <th class="pb-2">Monument</th>
+                    <th class="pb-2" data-i18n="r_price_pp">Prix/pers</th>
+                    <th class="pb-2">Total ({{ nb_personnes }} <span data-i18n="r_pers">pers</span>)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in monuments %}
+                <tr class="border-b last:border-0">
+                    <td class="py-2">{{ m.ville }}</td>
+                    <td class="py-2">{{ m.monument }}</td>
+                    <td class="py-2">{{ m.prix_par_personne }} Dhs</td>
+                    <td class="py-2 font-medium">{{ m.prix_par_personne|floatformat:0 }} &times; {{ nb_personnes }} = {% widthratio m.prix_par_personne 1 nb_personnes %} Dhs</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="font-semibold text-blue-700">
+                    <td colspan="3" class="pt-3" data-i18n="r_subtotal_monuments">Sous-total monuments</td>
+                    <td class="pt-3">{{ monuments_total }} Dhs</td>
+                </tr>
+            </tfoot>
+        </table>
+    </section>
+    {% endif %}
+
+    <!-- Activités -->
+    {% if activities %}
+    <section class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold text-gray-700 border-b pb-2 mb-4" data-i18n="r_activities">Activit&eacute;s</h2>
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left text-gray-500 border-b">
+                    <th class="pb-2" data-i18n="r_city">Ville</th>
+                    <th class="pb-2" data-i18n="r_activity">Activit&eacute;</th>
+                    <th class="pb-2" data-i18n="r_price_pp">Prix/pers</th>
+                    <th class="pb-2">Total ({{ nb_personnes }} <span data-i18n="r_pers">pers</span>)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in activities %}
+                <tr class="border-b last:border-0">
+                    <td class="py-2">{{ a.ville }}</td>
+                    <td class="py-2">{{ a.activite }}</td>
+                    <td class="py-2">{{ a.prix_par_personne }} Dhs</td>
+                    <td class="py-2 font-medium">{{ a.prix_par_personne|floatformat:0 }} &times; {{ nb_personnes }} = {% widthratio a.prix_par_personne 1 nb_personnes %} Dhs</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="font-semibold text-blue-700">
+                    <td colspan="3" class="pt-3" data-i18n="r_subtotal_activities">Sous-total activit&eacute;s</td>
+                    <td class="pt-3">{{ activities_total }} Dhs</td>
+                </tr>
+            </tfoot>
+        </table>
+    </section>
+    {% endif %}
+
+    <!-- Guides -->
+    {% if guides %}
+    <section class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold text-gray-700 border-b pb-2 mb-4" data-i18n="r_guides">Guides</h2>
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left text-gray-500 border-b">
+                    <th class="pb-2" data-i18n="r_city">Ville</th>
+                    <th class="pb-2" data-i18n="r_days">Jours</th>
+                    <th class="pb-2" data-i18n="r_cost">Co&ucirc;t</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for g in guides %}
+                <tr class="border-b last:border-0">
+                    <td class="py-2">{{ g.ville }}</td>
+                    <td class="py-2">{{ g.jours }}</td>
+                    <td class="py-2">{{ g.cout }} Dhs</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="font-semibold text-blue-700">
+                    <td colspan="2" class="pt-3" data-i18n="r_subtotal_guides">Sous-total guides</td>
+                    <td class="pt-3">{{ guides_total }} Dhs</td>
+                </tr>
+            </tfoot>
+        </table>
+    </section>
+    {% endif %}
+
+    <!-- Restaurants -->
+    {% if restaurants %}
+    <section class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold text-gray-700 border-b pb-2 mb-4" data-i18n="r_restaurants">Restaurants</h2>
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left text-gray-500 border-b">
+                    <th class="pb-2" data-i18n="r_city">Ville</th>
+                    <th class="pb-2">Restaurant</th>
+                    <th class="pb-2" data-i18n="r_meal">Repas</th>
+                    <th class="pb-2" data-i18n="r_price_pp">Prix/pers</th>
+                    <th class="pb-2">Total ({{ nb_personnes }} <span data-i18n="r_pers">pers</span>)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in restaurants %}
+                <tr class="border-b last:border-0">
+                    <td class="py-2">{{ r.ville }}</td>
+                    <td class="py-2">{{ r.restaurant }}</td>
+                    <td class="py-2 capitalize">{{ r.type_repas }}</td>
+                    <td class="py-2">{{ r.prix_par_personne }} Dhs</td>
+                    <td class="py-2 font-medium">{% widthratio r.prix_par_personne 1 nb_personnes %} Dhs</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="font-semibold text-blue-700">
+                    <td colspan="4" class="pt-3" data-i18n="r_subtotal_restaurants">Sous-total restaurants</td>
+                    <td class="pt-3">{{ restaurant_total }} Dhs</td>
+                </tr>
+            </tfoot>
+        </table>
+    </section>
+    {% endif %}
+
+    <!-- Extras -->
+    {% if extras %}
+    <section class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold text-gray-700 border-b pb-2 mb-4" data-i18n="r_extras">Extras</h2>
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="text-left text-gray-500 border-b">
+                    <th class="pb-2" data-i18n="r_description">Description</th>
+                    <th class="pb-2" data-i18n="r_price_pp">Prix/pers</th>
+                    <th class="pb-2">Total ({{ nb_personnes }} <span data-i18n="r_pers">pers</span>)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in extras %}
+                <tr class="border-b last:border-0">
+                    <td class="py-2">{{ e.description }}</td>
+                    <td class="py-2">{{ e.prix_par_personne }} Dhs</td>
+                    <td class="py-2 font-medium">{% widthratio e.prix_par_personne 1 nb_personnes %} Dhs</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="font-semibold text-blue-700">
+                    <td colspan="2" class="pt-3" data-i18n="r_subtotal_extras">Sous-total extras</td>
+                    <td class="pt-3">{{ extras_total }} Dhs</td>
+                </tr>
+            </tfoot>
+        </table>
+    </section>
+    {% endif %}
+
+    <!-- Total Single -->
+     <section class="bg-blue-600 text-white rounded-lg shadow p-6 flex justify-between items-center">
+        <span class="text-xl font-semibold">Total Single</span>
+        <span class="text-3xl font-bold">{{ total_single }} Dhs</span>
+    </section>
+    <section class="bg-blue-600 text-white rounded-lg shadow p-6 flex justify-between items-center">
+        <span class="text-xl font-semibold">Total Single Par Personne</span>
+        <span class="text-3xl font-bold">{{ total_par_personne_single }} Dhs</span>
+    </section>
+    <!-- Total Double -->
+     <section class="bg-blue-600 text-white rounded-lg shadow p-6 flex justify-between items-center">
+        <span class="text-xl font-semibold">Total Double</span>
+        <span class="text-3xl font-bold">{{ total_double }} Dhs</span>
+    </section>
+    <section class="bg-blue-600 text-white rounded-lg shadow p-6 flex justify-between items-center">
+        <span class="text-xl font-semibold">Total Double Par Personne</span>
+        <span class="text-3xl font-bold">{{ total_par_personne_double }} Dhs</span>
+    </section>
+
+    <!-- Buttons -->
+    <div id="bottomButtons" class="flex justify-between">
+        <a href="/" id="goBackBtn" class="px-5 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 text-sm" data-i18n="r_go_back">&larr; Retour</a>
+        <button id="pdfBtn" class="px-5 py-2 bg-green-700 text-white rounded-lg hover:bg-green-800 text-sm" data-i18n="r_download_pdf">&#11015; T&eacute;l&eacute;charger PDF</button>
+        <a href="/" id="newEstimationBtn" class="px-5 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 text-sm" data-i18n="r_new_estimation">&larr; Nouvelle estimation</a>
+    </div>
+</div>
+
+<script>
+const TRANSLATIONS = {
+    fr: {
+        r_title: "Estimation",
+        r_summary: "Résumé général",
+        r_nb_persons: "Nombre de personnes",
+        r_cities: "Villes",
+        r_transport_services: "Lignes transport",
+        r_transport: "Transport",
+        r_service_type: "Type de service",
+        r_vehicle: "Véhicule",
+        r_capacity: "Capacité",
+        r_quantity: "Nombre",
+        r_unit_price: "Tarif unitaire",
+        r_total_transport: "Total transport",
+        r_airport_transfer: "Transfert aéroport",
+        r_regular_transfer: "Mise à disposition",
+        r_hotels: "Hôtels",
+        r_city: "Ville",
+        r_hotel: "Hôtel",
+        r_nights: "Nuits",
+        r_price_single: "Prix/nuit (single)",
+        r_price_double: "Prix/nuit (double)",
+        r_monuments: "Monuments",
+        r_price_pp: "Prix/pers",
+        r_pers: "pers",
+        r_subtotal_monuments: "Sous-total monuments",
+        r_activities: "Activités",
+        r_activity: "Activité",
+        r_subtotal_activities: "Sous-total activités",
+        r_guides: "Guides",
+        r_days: "Jours",
+        r_cost: "Coût",
+        r_subtotal_guides: "Sous-total guides",
+        r_restaurants: "Restaurants",
+        r_meal: "Repas",
+        r_subtotal_restaurants: "Sous-total restaurants",
+        r_extras: "Extras",
+        r_description: "Description",
+        r_subtotal_extras: "Sous-total extras",
+        r_go_back: "← Retour",
+        r_download_pdf: "⬇ Télécharger PDF",
+        r_new_estimation: "← Nouvelle estimation",
+    },
+    en: {
+        r_title: "Estimation",
+        r_summary: "General Summary",
+        r_nb_persons: "Number of persons",
+        r_cities: "Cities",
+        r_transport_services: "Transport lines",
+        r_transport: "Transport",
+        r_service_type: "Service type",
+        r_vehicle: "Vehicle",
+        r_capacity: "Capacity",
+        r_quantity: "Quantity",
+        r_unit_price: "Unit price",
+        r_total_transport: "Total transport",
+        r_airport_transfer: "Airport transfer",
+        r_regular_transfer: "Regular transfer",
+        r_hotels: "Hotels",
+        r_city: "City",
+        r_hotel: "Hotel",
+        r_nights: "Nights",
+        r_price_single: "Price/night (single)",
+        r_price_double: "Price/night (double)",
+        r_monuments: "Monuments",
+        r_price_pp: "Price/pers",
+        r_pers: "pers",
+        r_subtotal_monuments: "Subtotal monuments",
+        r_activities: "Activities",
+        r_activity: "Activity",
+        r_subtotal_activities: "Subtotal activities",
+        r_guides: "Guides",
+        r_days: "Days",
+        r_cost: "Cost",
+        r_subtotal_guides: "Subtotal guides",
+        r_restaurants: "Restaurants",
+        r_meal: "Meal",
+        r_subtotal_restaurants: "Subtotal restaurants",
+        r_extras: "Extras",
+        r_description: "Description",
+        r_subtotal_extras: "Subtotal extras",
+        r_go_back: "← Go Back",
+        r_download_pdf: "⬇ Download PDF",
+        r_new_estimation: "← New Estimation",
+    }
+};
+
+let currentLang = "{{ lang }}"; // server-embedded, always matches submitted form language
+function t(key) { return (TRANSLATIONS[currentLang] || TRANSLATIONS.fr)[key] || key; }
+
+function applyTranslations() {
+    const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.fr;
+    document.querySelectorAll("[data-i18n]").forEach(function(el) {
+        const key = el.getAttribute("data-i18n");
+        if (key && dict[key] !== undefined) el.textContent = dict[key];
+    });
+    document.querySelectorAll(".transport-service-label").forEach(function(el) {
+        const serviceType = el.getAttribute("data-service-type");
+        if (serviceType === "airport") {
+            el.textContent = t("r_airport_transfer");
+        } else if (serviceType === "regular") {
+            el.textContent = t("r_regular_transfer");
+        }
+    });
+}
+
+function switchLang(lang) {
+    currentLang = lang;
+    localStorage.setItem("lang", lang);
+    applyTranslations();
+    updateLangButtons();
+}
+
+function updateLangButtons() {
+    const btnFr = document.getElementById("btn-fr");
+    const btnEn = document.getElementById("btn-en");
+    if (currentLang === "fr") {
+        btnFr.className = "px-3 py-1.5 rounded text-sm font-semibold border-2 border-blue-600 bg-blue-600 text-white transition-all";
+        btnEn.className = "px-3 py-1.5 rounded text-sm font-semibold border-2 border-gray-300 bg-white text-gray-600 hover:bg-gray-50 transition-all";
+    } else {
+        btnEn.className = "px-3 py-1.5 rounded text-sm font-semibold border-2 border-blue-600 bg-blue-600 text-white transition-all";
+        btnFr.className = "px-3 py-1.5 rounded text-sm font-semibold border-2 border-gray-300 bg-white text-gray-600 hover:bg-gray-50 transition-all";
+    }
+}
+
+// Bind and translate — script is at bottom of body so all elements exist already
+document.getElementById("btn-fr").addEventListener("click", function() { switchLang("fr"); });
+document.getElementById("btn-en").addEventListener("click", function() { switchLang("en"); });
+document.getElementById("pdfBtn").addEventListener("click", function() { window.print(); });
+document.getElementById("newEstimationBtn").addEventListener("click", function() {
+    sessionStorage.removeItem("formData");
+});
+updateLangButtons();
+applyTranslations();
+</script>
+</body>
+</html>

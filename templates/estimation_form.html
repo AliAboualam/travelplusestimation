@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estimation Circuit Touristique</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen py-8">
+<div class="max-w-4xl mx-auto px-4">
+
+    <div class="flex justify-end gap-2 mb-4">
+        <button id="btn-fr" class="px-3 py-1.5 rounded text-sm font-semibold border-2 transition-all">&#127467;&#127479; FR</button>
+        <button id="btn-en" class="px-3 py-1.5 rounded text-sm font-semibold border-2 transition-all">&#127468;&#127463; EN</button>
+    </div>
+
+    <h1 class="text-3xl font-bold text-center text-gray-800 mb-8" data-i18n="title">Estimation de Circuit Touristique</h1>
+    <form id="circuitForm" class="space-y-8">
+
+        <section class="bg-white rounded-lg shadow p-6 space-y-4">
+            <h2 class="text-xl font-semibold text-gray-700 border-b pb-2" data-i18n="general_info">Informations g&eacute;n&eacute;rales</h2>
+            <div>
+                <label class="block text-sm font-medium text-gray-600 mb-1" data-i18n="nb_persons">Nombre de personnes</label>
+                <input type="number" id="nbPersonnes" min="1" value="1"
+                       class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+        </section>
+
+        <section class="bg-white rounded-lg shadow p-6 space-y-4">
+            <h2 class="text-xl font-semibold text-gray-700 border-b pb-2" data-i18n="transport">Transport</h2>
+            <p class="text-sm text-gray-500" data-i18n="transport_hint">Ajoutez un ou plusieurs v&eacute;hicules pour les transferts a&eacute;roport et les mises &agrave; disposition.</p>
+            <div id="transportContainer" class="space-y-3"></div>
+            <button type="button" id="addTransportBtn"
+                    class="inline-flex items-center px-4 py-2 bg-sky-600 text-white rounded-md hover:bg-sky-700 text-sm"
+                    data-i18n="add_transport">+ Ajouter un v&eacute;hicule</button>
+        </section>
+
+        <section class="bg-white rounded-lg shadow p-6 space-y-4">
+            <h2 class="text-xl font-semibold text-gray-700 border-b pb-2" data-i18n="cities">Villes &agrave; visiter</h2>
+            <div id="villesContainer" class="flex flex-wrap gap-3"></div>
+        </section>
+
+        <section class="bg-white rounded-lg shadow p-6 space-y-4">
+            <h2 class="text-xl font-semibold text-gray-700 border-b pb-2" data-i18n="hotels">H&ocirc;tels</h2>
+            <p class="text-sm text-gray-500" data-i18n="hotels_hint">S&eacute;lectionnez les villes d'abord. Les h&ocirc;tels disponibles appara&icirc;tront ici.</p>
+            <div id="hotelsContainer" class="space-y-4"></div>
+        </section>
+
+        <section class="bg-white rounded-lg shadow p-6 space-y-4">
+            <h2 class="text-xl font-semibold text-gray-700 border-b pb-2" data-i18n="monuments">Monuments &agrave; visiter</h2>
+            <div id="monumentsContainer" class="space-y-4"></div>
+        </section>
+
+        <section class="bg-white rounded-lg shadow p-6 space-y-4">
+            <h2 class="text-xl font-semibold text-gray-700 border-b pb-2" data-i18n="activities">Activit&eacute;s</h2>
+            <div id="activitiesContainer" class="space-y-4"></div>
+        </section>
+
+        <section class="bg-white rounded-lg shadow p-6 space-y-4">
+            <h2 class="text-xl font-semibold text-gray-700 border-b pb-2" data-i18n="guides">Guides</h2>
+            <div id="guidesContainer" class="space-y-4"></div>
+        </section>
+
+        <section class="bg-white rounded-lg shadow p-6 space-y-4">
+            <h2 class="text-xl font-semibold text-gray-700 border-b pb-2" data-i18n="restaurants">D&eacute;jeuners / D&icirc;ners</h2>
+            <div id="restaurantsContainer" class="space-y-4"></div>
+        </section>
+
+        <section class="bg-white rounded-lg shadow p-6 space-y-4">
+            <h2 class="text-xl font-semibold text-gray-700 border-b pb-2" data-i18n="extras">Extras</h2>
+            <div id="extrasContainer" class="space-y-3"></div>
+            <button type="button" id="addExtraBtn"
+                    class="mt-2 inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm"
+                    data-i18n="add_extra">+ Ajouter un extra</button>
+        </section>
+
+        <div class="flex justify-end">
+            <button type="submit"
+                    class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 shadow"
+                    data-i18n="generate">G&eacute;n&eacute;rer l'estimation</button>
+        </div>
+    </form>
+
+    <div id="outputSection" class="hidden mt-8 bg-white rounded-lg shadow p-6">
+        <h2 class="text-xl font-semibold text-gray-700 border-b pb-2 mb-4" data-i18n="json_preview">Donn&eacute;es du formulaire (JSON)</h2>
+        <pre id="jsonOutput" class="bg-gray-900 text-green-400 p-4 rounded-md overflow-x-auto text-sm"></pre>
+    </div>
+</div>
+
+<script>
+const TRANSLATIONS = {
+    fr: {
+        title: "Estimation de Circuit Touristique",
+        general_info: "Informations générales",
+        nb_persons: "Nombre de personnes",
+        transport: "Transport",
+        transport_hint: "Ajoutez un ou plusieurs véhicules pour les transferts aéroport et les mises à disposition.",
+        add_transport: "+ Ajouter un véhicule",
+        service_type: "Type de service",
+        airport_transfer: "Transfert aéroport",
+        regular_transfer: "Mise à disposition",
+        select_vehicle: "Sélectionner un véhicule",
+        quantity: "Nombre",
+        days_or_times: "Jours / fois",
+        unit_rate: "Tarif unitaire",
+        per_day: "par jour",
+        per_transfer: "par transfert",
+        vehicle: "Véhicule",
+        remove: "Supprimer",
+        cities: "Villes à visiter",
+        hotels: "Hôtels",
+        hotels_hint: "Sélectionnez les villes d'abord. Les hôtels disponibles apparaîtront ici.",
+        monuments: "Monuments à visiter",
+        activities: "Activités",
+        guides: "Guides",
+        restaurants: "Déjeuners / Dîners",
+        extras: "Extras",
+        add_extra: "+ Ajouter un extra",
+        generate: "Générer l'estimation",
+        json_preview: "Données du formulaire (JSON)",
+        nights: "Nuits",
+        days: "Jours",
+        no_city: "Aucune ville sélectionnée",
+        lunch: "Déjeuner",
+        dinner: "Dîner",
+        description: "Description",
+        price_pp: "Prix/pers (Dhs)",
+        half_day: "demi-journée",
+        full_day: "journée",
+        price_on_demand: "Prix sur demande",
+        supplement: "Supplément DP",
+        included: "INCLUS"
+    },
+    en: {
+        title: "Tourist Circuit Estimation",
+        general_info: "General Information",
+        nb_persons: "Number of persons",
+        transport: "Transport",
+        transport_hint: "Add one or more vehicles for airport transfers and regular services.",
+        add_transport: "+ Add a vehicle",
+        service_type: "Service type",
+        airport_transfer: "Airport transfer",
+        regular_transfer: "Regular transfer",
+        select_vehicle: "Select a vehicle",
+        quantity: "Quantity",
+        days_or_times: "Days / times",
+        unit_rate: "Unit rate",
+        per_day: "per day",
+        per_transfer: "per transfer",
+        vehicle: "Vehicle",
+        remove: "Remove",
+        cities: "Cities to visit",
+        hotels: "Hotels",
+        hotels_hint: "Select cities first. Available hotels will appear here.",
+        monuments: "Monuments to visit",
+        activities: "Activities",
+        guides: "Guides",
+        restaurants: "Lunch / Dinner",
+        extras: "Extras",
+        add_extra: "+ Add an extra",
+        generate: "Generate estimation",
+        json_preview: "Form data (JSON)",
+        nights: "Nights",
+        days: "Days",
+        no_city: "No city selected",
+        lunch: "Lunch",
+        dinner: "Dinner",
+        description: "Description",
+        price_pp: "Price/pers (Dhs)",
+        half_day: "half-day",
+        full_day: "full day",
+        price_on_demand: "Price on demand",
+        supplement: "HB Supplement",
+        included: "INCLUDED"
+    }
+};
+
+let currentLang = localStorage.getItem("lang") || "fr";
+function t(key) {
+    return (TRANSLATIONS[currentLang] || TRANSLATIONS.fr)[key] || key;
+}
+
+function switchLang(lang) {
+    snapshotSelections();
+    currentLang = lang;
+    localStorage.setItem("lang", lang);
+    document.querySelectorAll("[data-i18n]").forEach(function(el) {
+        const key = el.getAttribute("data-i18n");
+        if (key) {
+            el.textContent = t(key);
+        }
+    });
+    translateTransportRows();
+    renderHotels();
+    renderMonuments();
+    renderActivities();
+    renderGuides();
+    renderRestaurants();
+    restoreSelectionsAfterLangSwitch();
+    updateLangButtons();
+}
+
+function updateLangButtons() {
+    const btnFr = document.getElementById("btn-fr");
+    const btnEn = document.getElementById("btn-en");
+    if (currentLang === "fr") {
+        btnFr.className = "px-3 py-1.5 rounded text-sm font-semibold border-2 border-blue-600 bg-blue-600 text-white transition-all";
+        btnEn.className = "px-3 py-1.5 rounded text-sm font-semibold border-2 border-gray-300 bg-white text-gray-600 hover:bg-gray-50 transition-all";
+    } else {
+        btnEn.className = "px-3 py-1.5 rounded text-sm font-semibold border-2 border-blue-600 bg-blue-600 text-white transition-all";
+        btnFr.className = "px-3 py-1.5 rounded text-sm font-semibold border-2 border-gray-300 bg-white text-gray-600 hover:bg-gray-50 transition-all";
+    }
+}
+
+let _snapshot = null;
+function snapshotSelections() {
+    _snapshot = {
+        hotels: [...document.querySelectorAll(".hotel-cb:checked")].map(cb => ({ ville: cb.dataset.ville, hotel: cb.dataset.hotel, nuits: cb.closest(".flex").querySelector(".hotel-nuits")?.value || 1 })),
+        monuments: [...document.querySelectorAll(".monument-cb:checked")].map(cb => ({ ville: cb.dataset.ville, monument: cb.dataset.monument })),
+        activities: [...document.querySelectorAll(".activity-cb:checked")].map(cb => ({ ville: cb.dataset.ville, activite: cb.dataset.activite })),
+        guides: [...document.querySelectorAll(".guide-days")].map(inp => ({ ville: inp.dataset.ville, jours: inp.value })).filter(g => parseFloat(g.jours) > 0),
+        restaurants: [...document.querySelectorAll(".resto-cb:checked")].map(cb => ({ ville: cb.dataset.ville, restaurant: cb.dataset.restaurant, type: cb.dataset.type }))
+    };
+}
+
+function restoreSelectionsAfterLangSwitch() {
+    if (!_snapshot) {
+        return;
+    }
+
+    _snapshot.hotels.forEach(h => {
+        const cb = hotelsContainer.querySelector(`.hotel-cb[data-hotel="${h.hotel}"][data-ville="${h.ville}"]`);
+        if (cb) {
+            cb.checked = true;
+            const nightsWrapper = cb.closest(".flex").querySelector(".nuits-input");
+            if (nightsWrapper) {
+                nightsWrapper.classList.remove("hidden");
+            }
+            const nightsInput = cb.closest(".flex").querySelector(".hotel-nuits");
+            if (nightsInput) {
+                nightsInput.value = h.nuits;
+            }
+        }
+    });
+    _snapshot.monuments.forEach(m => {
+        const cb = monumentsContainer.querySelector(`.monument-cb[data-monument="${m.monument}"][data-ville="${m.ville}"]`);
+        if (cb) {
+            cb.checked = true;
+        }
+    });
+    _snapshot.activities.forEach(a => {
+        const cb = document.querySelector(`.activity-cb[data-activite="${a.activite}"][data-ville="${a.ville}"]`);
+        if (cb) {
+            cb.checked = true;
+        }
+    });
+    _snapshot.guides.forEach(g => {
+        const input = document.querySelector(`.guide-days[data-ville="${g.ville}"]`);
+        if (input) {
+            input.value = g.jours;
+        }
+    });
+    _snapshot.restaurants.forEach(r => {
+        const cb = restaurantsContainer.querySelector(`.resto-cb[data-restaurant="${r.restaurant}"][data-ville="${r.ville}"][data-type="${r.type}"]`);
+        if (cb) {
+            cb.checked = true;
+        }
+    });
+    _snapshot = null;
+}
+
+const TRANSPORT = {{ transport_json|safe }};
+const HOTELS = {{ hotels_json|safe }};
+const MONUMENTS = {{ monuments_json|safe }};
+const RESTAURANTS = {{ restaurants_json|safe }};
+const ACTIVITIES = {{ activities_json|safe }};
+const GUIDES = {{ guides_json|safe }};
+
+const ALL_VILLES = [...new Set([
+    ...HOTELS.map(h => h.ville),
+    ...MONUMENTS.map(m => m.ville),
+    ...RESTAURANTS.map(r => r.ville),
+    ...ACTIVITIES.map(a => a.ville),
+    ...GUIDES.map(g => g.ville)
+])].sort();
+
+const nbPersonnesInput = document.getElementById("nbPersonnes");
+const transportContainer = document.getElementById("transportContainer");
+const villesContainer = document.getElementById("villesContainer");
+const hotelsContainer = document.getElementById("hotelsContainer");
+const monumentsContainer = document.getElementById("monumentsContainer");
+const activitiesContainer = document.getElementById("activitiesContainer");
+const guidesContainer = document.getElementById("guidesContainer");
+const restaurantsContainer = document.getElementById("restaurantsContainer");
+const extrasContainer = document.getElementById("extrasContainer");
+
+function getTransportServiceConfig(serviceType) {
+    if (serviceType === "airport") {
+        return {
+            unitSuffix: t("per_transfer"),
+            priceKey: "prix_aeroport"
+        };
+    }
+    return {
+        unitSuffix: t("per_day"),
+        priceKey: "prix_jour"
+    };
+}
+
+function buildVehicleOptions(selectedVehicle) {
+    const defaultOption = `<option value="">${t("select_vehicle")}</option>`;
+    const options = TRANSPORT.map(vehicle => {
+        const isSelected = vehicle.type === selectedVehicle ? "selected" : "";
+        return `<option value="${vehicle.type}" ${isSelected}>${vehicle.type} (${vehicle.capacite} pax)</option>`;
+    }).join("");
+    return defaultOption + options;
+}
+
+function syncTransportRow(row) {
+    const serviceSelect = row.querySelector(".transport-service");
+    const vehicleSelect = row.querySelector(".transport-vehicle");
+    const quantityLabel = row.querySelector(".transport-quantity-label");
+    const rateInfo = row.querySelector(".transport-rate");
+    const config = getTransportServiceConfig(serviceSelect.value);
+    const vehicle = TRANSPORT.find(item => item.type === vehicleSelect.value);
+    const placeholderOption = vehicleSelect.querySelector("option[value='']");
+
+    quantityLabel.textContent = `${t("days_or_times")} :`;
+    if (placeholderOption) {
+        placeholderOption.textContent = t("select_vehicle");
+    }
+
+    if (!vehicle) {
+        rateInfo.textContent = `${t("unit_rate")} : -`;
+        return;
+    }
+
+    rateInfo.textContent = `${t("unit_rate")} : ${vehicle[config.priceKey]} Dhs ${config.unitSuffix}`;
+}
+
+function addTransportRow(entry) {
+    const transportEntry = entry || {};
+    const row = document.createElement("div");
+    row.className = "grid grid-cols-1 md:grid-cols-[1.1fr_1.5fr_0.7fr_auto] gap-3 items-end border border-gray-200 rounded-md p-4 transport-row";
+    row.innerHTML = `
+        <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1" data-static-i18n="service_type">${t("service_type")}</label>
+            <select class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm transport-service">
+                <option value="airport" ${transportEntry.service_type === "airport" ? "selected" : ""}>${t("airport_transfer")}</option>
+                <option value="regular" ${transportEntry.service_type === "regular" || !transportEntry.service_type ? "selected" : ""}>${t("regular_transfer")}</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1" data-static-i18n="vehicle">${t("vehicle")}</label>
+            <select class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm transport-vehicle">${buildVehicleOptions(transportEntry.vehicle_type)}</select>
+            <p class="text-xs text-blue-700 mt-1 transport-rate"></p>
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-500 mb-1 transport-quantity-label">${t("days_or_times")} :</label>
+            <input type="number" min="1" step="1" value="${transportEntry.quantity || 1}" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm transport-quantity">
+        </div>
+        <button type="button" class="px-3 py-2 border border-red-200 text-red-600 rounded-md hover:bg-red-50 text-sm remove-transport">${t("remove")}</button>`;
+    transportContainer.appendChild(row);
+
+    row.querySelector(".transport-service").addEventListener("change", function() {
+        syncTransportRow(row);
+    });
+    row.querySelector(".transport-vehicle").addEventListener("change", function() {
+        syncTransportRow(row);
+    });
+    row.querySelector(".remove-transport").addEventListener("click", function() {
+        row.remove();
+        if (transportContainer.children.length === 0) {
+            addTransportRow();
+        }
+    });
+
+    syncTransportRow(row);
+}
+
+function translateTransportRows() {
+    transportContainer.querySelectorAll(".transport-row").forEach(row => {
+        row.querySelector('[data-static-i18n="service_type"]').textContent = t("service_type");
+        row.querySelector('[data-static-i18n="vehicle"]').textContent = t("vehicle");
+        row.querySelector(".remove-transport").textContent = t("remove");
+
+        const serviceSelect = row.querySelector(".transport-service");
+        const selectedService = serviceSelect.value;
+        serviceSelect.innerHTML = `
+            <option value="airport" ${selectedService === "airport" ? "selected" : ""}>${t("airport_transfer")}</option>
+            <option value="regular" ${selectedService === "regular" ? "selected" : ""}>${t("regular_transfer")}</option>`;
+        syncTransportRow(row);
+    });
+}
+
+function collectTransportItems() {
+    return [...transportContainer.querySelectorAll(".transport-row")].map(row => {
+        const serviceType = row.querySelector(".transport-service").value;
+        const vehicleType = row.querySelector(".transport-vehicle").value;
+        const quantity = parseInt(row.querySelector(".transport-quantity").value, 10) || 0;
+        const vehicle = TRANSPORT.find(item => item.type === vehicleType);
+        const config = getTransportServiceConfig(serviceType);
+
+        if (!vehicle || quantity <= 0) {
+            return null;
+        }
+
+        return {
+            service_type: serviceType,
+            vehicle_type: vehicle.type,
+            capacite: vehicle.capacite,
+            quantity: quantity,
+            prix_aeroport: vehicle.prix_aeroport,
+            prix_jour: vehicle.prix_jour,
+            unit_price: vehicle[config.priceKey]
+        };
+    }).filter(Boolean);
+}
+
+document.getElementById("addTransportBtn").addEventListener("click", function() {
+    addTransportRow();
+});
+
+function renderVilles() {
+    villesContainer.innerHTML = "";
+    ALL_VILLES.forEach(ville => {
+        const label = document.createElement("label");
+        label.className = "inline-flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-md cursor-pointer hover:bg-blue-50 border border-gray-200";
+        label.innerHTML = `<input type="checkbox" class="ville-cb accent-blue-600" value="${ville}"> <span class="text-sm">${ville}</span>`;
+        villesContainer.appendChild(label);
+    });
+    villesContainer.querySelectorAll(".ville-cb").forEach(cb => {
+        cb.addEventListener("change", onVillesChanged);
+    });
+}
+
+function getSelectedVilles() {
+    return [...villesContainer.querySelectorAll(".ville-cb:checked")].map(cb => cb.value);
+}
+
+function onVillesChanged() {
+    renderHotels();
+    renderMonuments();
+    renderActivities();
+    renderGuides();
+    renderRestaurants();
+}
+
+function renderHotels() {
+    const villes = getSelectedVilles();
+    hotelsContainer.innerHTML = "";
+    if (villes.length === 0) {
+        hotelsContainer.innerHTML = `<p class="text-sm text-gray-400 italic">${t("no_city")}</p>`;
+        return;
+    }
+
+    villes.forEach(ville => {
+        const cityHotels = HOTELS.filter(h => h.ville === ville);
+        if (cityHotels.length === 0) {
+            return;
+        }
+
+        const div = document.createElement("div");
+        div.className = "border border-gray-200 rounded-md p-4";
+        div.innerHTML = `<h3 class="font-medium text-gray-700 mb-2">${ville}</h3>`;
+        cityHotels.forEach(h => {
+            const starsHtml = h.etoiles ? ` <span class="text-yellow-500 text-xs">${"★".repeat(h.etoiles)}</span>` : "";
+            const prix = h.prix_double != null ? ` — Double: ${h.prix_double} Dhs, Single: ${h.prix_single != null ? h.prix_single + " Dhs" : "N/A"}` : ` — ${t("price_on_demand")}`;
+            const suppText = h.supplement_dp != null ? (h.supplement_dp === "INCLUS" ? ` | ${t("supplement")}: ${t("included")}` : ` | ${t("supplement")}: ${h.supplement_dp} Dhs`) : "";
+            const row = document.createElement("div");
+            row.className = "flex flex-wrap items-center gap-3 mb-2";
+            row.innerHTML = `
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" class="hotel-cb accent-blue-600" data-ville="${ville}" data-hotel="${h.hotel}">
+                    <span class="text-sm">${h.hotel}${starsHtml}<span class="text-gray-400 text-xs">${prix}${suppText}</span></span>
+                </label>
+                <div class="hidden nuits-input">
+                    <label class="text-xs text-gray-500">${t("nights")} :</label>
+                    <input type="number" min="1" value="1" class="w-16 border border-gray-300 rounded px-2 py-1 text-sm hotel-nuits" data-ville="${ville}" data-hotel="${h.hotel}">
+                </div>`;
+            div.appendChild(row);
+        });
+        hotelsContainer.appendChild(div);
+    });
+
+    hotelsContainer.querySelectorAll(".hotel-cb").forEach(cb => {
+        cb.addEventListener("change", e => {
+            const nightsWrapper = e.target.closest(".flex").querySelector(".nuits-input");
+            nightsWrapper.classList.toggle("hidden", !e.target.checked);
+        });
+    });
+}
+
+function renderMonuments() {
+    const villes = getSelectedVilles();
+    monumentsContainer.innerHTML = "";
+    if (villes.length === 0) {
+        monumentsContainer.innerHTML = `<p class="text-sm text-gray-400 italic">${t("no_city")}</p>`;
+        return;
+    }
+
+    villes.forEach(ville => {
+        const cityMonuments = MONUMENTS.filter(m => m.ville === ville);
+        if (cityMonuments.length === 0) {
+            return;
+        }
+
+        const div = document.createElement("div");
+        div.className = "border border-gray-200 rounded-md p-4";
+        div.innerHTML = `<h3 class="font-medium text-gray-700 mb-2">${ville}</h3>`;
+        cityMonuments.forEach(m => {
+            const label = document.createElement("label");
+            label.className = "flex items-center gap-2 mb-1 cursor-pointer text-sm";
+            label.innerHTML = `<input type="checkbox" class="monument-cb accent-blue-600" data-ville="${ville}" data-monument="${m.monument}" data-prix="${m.prix}">
+                ${m.monument} <span class="text-gray-400 text-xs">(${m.prix} Dhs/${currentLang === "fr" ? "pers" : "pp"})</span>`;
+            div.appendChild(label);
+        });
+        monumentsContainer.appendChild(div);
+    });
+}
+
+function renderActivities() {
+    const villes = getSelectedVilles();
+    activitiesContainer.innerHTML = "";
+    if (villes.length === 0) {
+        activitiesContainer.innerHTML = `<p class="text-sm text-gray-400 italic">${t("no_city")}</p>`;
+        return;
+    }
+
+    villes.forEach(ville => {
+        const cityActivities = ACTIVITIES.filter(a => a.ville === ville);
+        if (cityActivities.length === 0) {
+            return;
+        }
+
+        const div = document.createElement("div");
+        div.className = "border border-gray-200 rounded-md p-4";
+        div.innerHTML = `<h3 class="font-medium text-gray-700 mb-2">${ville}</h3>`;
+        cityActivities.forEach(a => {
+            const label = document.createElement("label");
+            label.className = "flex items-center gap-2 mb-1 cursor-pointer text-sm";
+            label.innerHTML = `<input type="checkbox" class="activity-cb accent-blue-600" data-ville="${ville}" data-activite="${a.activite}" data-prix="${a.prix}">
+                ${a.activite} <span class="text-gray-400 text-xs">(${a.prix} Dhs/${currentLang === "fr" ? "pers" : "pp"})</span>`;
+            div.appendChild(label);
+        });
+        activitiesContainer.appendChild(div);
+    });
+}
+
+function renderGuides() {
+    const villes = getSelectedVilles();
+    guidesContainer.innerHTML = "";
+    if (villes.length === 0) {
+        guidesContainer.innerHTML = `<p class="text-sm text-gray-400 italic">${t("no_city")}</p>`;
+        return;
+    }
+
+    villes.forEach(ville => {
+        const cityGuides = GUIDES.filter(g => g.ville === ville);
+        if (cityGuides.length === 0) {
+            return;
+        }
+
+        cityGuides.forEach(g => {
+            const prixInfo = g.prix_journee > 0
+                ? `${t("half_day")}: ${g.prix_demi_journee} Dhs / ${t("full_day")}: ${g.prix_journee} Dhs`
+                : `${t("half_day")}: ${g.prix_demi_journee} Dhs`;
+            const div = document.createElement("div");
+            div.className = "flex flex-wrap items-center gap-3 border border-gray-200 rounded-md p-3";
+            div.innerHTML = `
+                <span class="font-medium text-sm">Guide ${g.ville}</span>
+                <span class="text-gray-400 text-xs">(${prixInfo})</span>
+                <div class="ml-auto flex items-center gap-2">
+                    <label class="text-xs text-gray-500">${t("days")} :</label>
+                    <input type="number" min="0" max="30" step="0.5" value="0"
+                           class="w-20 border border-gray-300 rounded px-2 py-1 text-sm guide-days"
+                           data-ville="${g.ville}" data-prix-demi="${g.prix_demi_journee}" data-prix-jour="${g.prix_journee}">
+                </div>`;
+            guidesContainer.appendChild(div);
+        });
+    });
+}
+
+function renderRestaurants() {
+    const villes = getSelectedVilles();
+    restaurantsContainer.innerHTML = "";
+    if (villes.length === 0) {
+        restaurantsContainer.innerHTML = `<p class="text-sm text-gray-400 italic">${t("no_city")}</p>`;
+        return;
+    }
+
+    villes.forEach(ville => {
+        const cityRestos = RESTAURANTS.filter(r => r.ville === ville);
+        if (cityRestos.length === 0) {
+            return;
+        }
+
+        const div = document.createElement("div");
+        div.className = "border border-gray-200 rounded-md p-4";
+        div.innerHTML = `<h3 class="font-medium text-gray-700 mb-2">${ville}</h3>`;
+        cityRestos.forEach(r => {
+            const row = document.createElement("div");
+            row.className = "flex flex-wrap items-center gap-3 mb-2 text-sm";
+            const dejLabel = r.prix_dejeuner ? `${t("lunch")}: ${r.prix_dejeuner} Dhs` : "";
+            const dinLabel = r.prix_diner ? `${t("dinner")}: ${r.prix_diner} Dhs` : "";
+            const prixInfo = [dejLabel, dinLabel].filter(Boolean).join(" / ");
+            row.innerHTML = `
+                <span class="font-medium">${r.restaurant}</span>
+                <span class="text-gray-400 text-xs">(${prixInfo})</span>
+                <div class="flex items-center gap-3 ml-auto">
+                    ${r.prix_dejeuner ? `<label class="inline-flex items-center gap-1 cursor-pointer"><input type="checkbox" class="resto-cb accent-blue-600" data-ville="${ville}" data-restaurant="${r.restaurant}" data-type="dejeuner" data-prix="${r.prix_dejeuner}"> <span class="text-xs">${t("lunch")}</span></label>` : ""}
+                    ${r.prix_diner ? `<label class="inline-flex items-center gap-1 cursor-pointer"><input type="checkbox" class="resto-cb accent-blue-600" data-ville="${ville}" data-restaurant="${r.restaurant}" data-type="diner" data-prix="${r.prix_diner}"> <span class="text-xs">${t("dinner")}</span></label>` : ""}
+                </div>`;
+            div.appendChild(row);
+        });
+        restaurantsContainer.appendChild(div);
+    });
+}
+
+function addExtra() {
+    const row = document.createElement("div");
+    row.className = "flex flex-wrap items-center gap-3 extra-row";
+    row.innerHTML = `
+        <input type="text" placeholder="${t("description")}" class="flex-1 min-w-[200px] border border-gray-300 rounded-md px-3 py-2 text-sm extra-desc">
+        <input type="number" min="0" step="0.01" placeholder="${t("price_pp")}" class="w-40 border border-gray-300 rounded-md px-3 py-2 text-sm extra-prix">
+        <button type="button" class="text-red-500 hover:text-red-700 text-lg remove-extra">&times;</button>`;
+    extrasContainer.appendChild(row);
+    row.querySelector(".remove-extra").addEventListener("click", function() {
+        row.remove();
+    });
+}
+
+document.getElementById("addExtraBtn").addEventListener("click", addExtra);
+
+document.getElementById("circuitForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const nbPersonnes = parseInt(nbPersonnesInput.value, 10) || 1;
+    const data = {
+        nb_personnes: nbPersonnes,
+        transport_items: collectTransportItems(),
+        villes: getSelectedVilles(),
+        hotels: [...document.querySelectorAll(".hotel-cb:checked")].map(cb => {
+            const hotelData = HOTELS.find(h => h.hotel === cb.dataset.hotel && h.ville === cb.dataset.ville);
+            return {
+                ville: cb.dataset.ville,
+                hotel: cb.dataset.hotel,
+                etoiles: hotelData ? hotelData.etoiles : null,
+                nuits: parseInt(cb.closest(".flex").querySelector(".hotel-nuits").value, 10) || 1,
+                prix_double: hotelData ? hotelData.prix_double : null,
+                prix_single: hotelData ? hotelData.prix_single : null,
+                supplement_dp: hotelData ? hotelData.supplement_dp : null
+            };
+        }),
+        monuments: [...document.querySelectorAll(".monument-cb:checked")].map(cb => ({
+            ville: cb.dataset.ville,
+            monument: cb.dataset.monument,
+            prix_par_personne: parseInt(cb.dataset.prix, 10)
+        })),
+        activities: [...document.querySelectorAll(".activity-cb:checked")].map(cb => ({
+            ville: cb.dataset.ville,
+            activite: cb.dataset.activite,
+            prix_par_personne: parseInt(cb.dataset.prix, 10)
+        })),
+        guides: [...document.querySelectorAll(".guide-days")].map(inp => ({
+            ville: inp.dataset.ville,
+            jours: parseFloat(inp.value) || 0,
+            prix_demi_journee: parseInt(inp.dataset.prixDemi, 10) || 0,
+            prix_journee: parseInt(inp.dataset.prixJour, 10) || 0
+        })).filter(g => g.jours > 0),
+        restaurants: [...document.querySelectorAll(".resto-cb:checked")].map(cb => ({
+            ville: cb.dataset.ville,
+            restaurant: cb.dataset.restaurant,
+            type_repas: cb.dataset.type,
+            prix_par_personne: parseInt(cb.dataset.prix, 10) || 0
+        })),
+        extras: [...document.querySelectorAll(".extra-row")].map(row => ({
+            description: row.querySelector(".extra-desc").value,
+            prix_par_personne: parseFloat(row.querySelector(".extra-prix").value) || 0
+        })).filter(ex => ex.description),
+        lang: currentLang
+    };
+
+    sessionStorage.setItem("formData", JSON.stringify(data));
+
+    const outputSection = document.getElementById("outputSection");
+    outputSection.classList.remove("hidden");
+    document.getElementById("jsonOutput").textContent = JSON.stringify(data, null, 2);
+
+    const submitForm = document.createElement("form");
+    submitForm.method = "POST";
+    submitForm.action = "/submit/";
+    submitForm.style.display = "none";
+
+    const payloadInput = document.createElement("input");
+    payloadInput.type = "hidden";
+    payloadInput.name = "payload";
+    payloadInput.value = JSON.stringify(data);
+    submitForm.appendChild(payloadInput);
+
+    document.body.appendChild(submitForm);
+    submitForm.submit();
+});
+
+function restoreFormData() {
+    const saved = sessionStorage.getItem("formData");
+    if (!saved) {
+        return;
+    }
+
+    try {
+        const data = JSON.parse(saved);
+        if (data.lang) {
+            currentLang = data.lang;
+            localStorage.setItem("lang", currentLang);
+        }
+
+        nbPersonnesInput.value = data.nb_personnes || 1;
+
+        transportContainer.innerHTML = "";
+        if (Array.isArray(data.transport_items) && data.transport_items.length > 0) {
+            data.transport_items.forEach(item => addTransportRow(item));
+        } else if (data.transport && data.nb_transferts) {
+            addTransportRow({
+                service_type: "regular",
+                vehicle_type: data.transport.type,
+                quantity: data.nb_transferts
+            });
+        }
+
+        (data.villes || []).forEach(ville => {
+            const cb = villesContainer.querySelector(`.ville-cb[value="${ville}"]`);
+            if (cb) {
+                cb.checked = true;
+            }
+        });
+        onVillesChanged();
+
+        (data.hotels || []).forEach(h => {
+            const cb = hotelsContainer.querySelector(`.hotel-cb[data-hotel="${h.hotel}"][data-ville="${h.ville}"]`);
+            if (cb) {
+                cb.checked = true;
+                const nightsWrapper = cb.closest(".flex").querySelector(".nuits-input");
+                if (nightsWrapper) {
+                    nightsWrapper.classList.remove("hidden");
+                }
+                const nightsInput = cb.closest(".flex").querySelector(".hotel-nuits");
+                if (nightsInput) {
+                    nightsInput.value = h.nuits || 1;
+                }
+            }
+        });
+
+        (data.monuments || []).forEach(m => {
+            const cb = monumentsContainer.querySelector(`.monument-cb[data-monument="${m.monument}"][data-ville="${m.ville}"]`);
+            if (cb) {
+                cb.checked = true;
+            }
+        });
+
+        (data.activities || []).forEach(a => {
+            const cb = document.querySelector(`.activity-cb[data-activite="${a.activite}"][data-ville="${a.ville}"]`);
+            if (cb) {
+                cb.checked = true;
+            }
+        });
+
+        (data.guides || []).forEach(g => {
+            const input = document.querySelector(`.guide-days[data-ville="${g.ville}"]`);
+            if (input) {
+                input.value = g.jours;
+            }
+        });
+
+        (data.restaurants || []).forEach(r => {
+            const cb = restaurantsContainer.querySelector(`.resto-cb[data-restaurant="${r.restaurant}"][data-ville="${r.ville}"][data-type="${r.type_repas}"]`);
+            if (cb) {
+                cb.checked = true;
+            }
+        });
+
+        (data.extras || []).forEach(ex => {
+            addExtra();
+            const rows = document.querySelectorAll(".extra-row");
+            const lastRow = rows[rows.length - 1];
+            lastRow.querySelector(".extra-desc").value = ex.description;
+            lastRow.querySelector(".extra-prix").value = ex.prix_par_personne;
+        });
+    } catch (e) {
+        // Ignore invalid session payloads.
+    }
+}
+
+document.getElementById("btn-fr").addEventListener("click", function() {
+    switchLang("fr");
+});
+document.getElementById("btn-en").addEventListener("click", function() {
+    switchLang("en");
+});
+
+renderVilles();
+restoreFormData();
+if (transportContainer.children.length === 0) {
+    addTransportRow();
+}
+updateLangButtons();
+document.querySelectorAll("[data-i18n]").forEach(function(el) {
+    const key = el.getAttribute("data-i18n");
+    if (key) {
+        el.textContent = t(key);
+    }
+});
+translateTransportRows();
+</script>
+</body>
+</html>
