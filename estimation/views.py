@@ -127,9 +127,13 @@ def submit_estimation(request):
 
     total_single = transport_total + monuments_total + activities_total + extras_total + restaurant_total + guides_total +  total_hotel_price_single * nb_personnes if nb_personnes > 0 else 0
     total_double = transport_total + monuments_total + activities_total + extras_total + restaurant_total + guides_total +  total_hotel_price_double * nb_personnes if nb_personnes > 0 else 0
-    total_par_personne_single = ((transport_total + monuments_total + activities_total + extras_total + restaurant_total + guides_total) / nb_personnes) + total_hotel_price_single if nb_personnes > 0 else 0
-    total_par_personne_double = ((transport_total + monuments_total + activities_total + extras_total + restaurant_total + guides_total) / nb_personnes) + total_hotel_price_double if nb_personnes > 0 else 0
+    total_par_personne_single = round(((transport_total + monuments_total + activities_total + extras_total + restaurant_total + guides_total) / nb_personnes) + total_hotel_price_single if nb_personnes > 0 else 0, 2)
+    total_par_personne_double = round(((transport_total + monuments_total + activities_total + extras_total + restaurant_total + guides_total) / nb_personnes) + total_hotel_price_double if nb_personnes > 0 else 0, 2)
 
+    total_double_commission = round(total_par_personne_double * 1.15, 2)
+
+    supplement_hotel = total_hotel_price_single - total_hotel_price_double
+    supplement_hotel_commission = round(supplement_hotel * 1.15, 2)
     context = {
         "data": data,
         "nb_personnes": nb_personnes,
@@ -153,6 +157,9 @@ def submit_estimation(request):
         "total_double": total_double,
         "total_par_personne_single": total_par_personne_single,
         "total_par_personne_double": total_par_personne_double,
+        "supplement_hotel": supplement_hotel,
+        "total_double_commission": total_double_commission,
+        "supplement_hotel_commission": supplement_hotel_commission,
         "form_data_json": json.dumps(data),
         "lang": data.get("lang", "fr"),
     }
